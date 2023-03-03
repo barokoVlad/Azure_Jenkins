@@ -1,0 +1,25 @@
+pipeline {
+    agent any
+    
+    stages {
+        stage('SSH to remote VM') {
+            steps {
+                sshagent(['my-ssh-key']) {
+                    sh 'ssh ruser@20.4.225.155 "sudo apt-get update && sudo apt-get install apache2 -y"'
+                }
+            }
+        }
+        stage('Clone Git repository') {
+            steps {
+                git branch: 'main', credentialsId: 'my-git-creds', url: 'https://github.com/barokoVlad/Azure_Jenkins.git'
+            }
+        }
+        stage('Replace Apache2 index.html with Git index.html') {
+            steps {
+                sshagent(['my-ssh-key']) {
+                    sh 'scp -r /var/lib/jenkins/workspace/git/index/index.html ruser@20.4.225.155:/var/www/html/index.html'
+                }
+            }
+        }
+    }
+}
